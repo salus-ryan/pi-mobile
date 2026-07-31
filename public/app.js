@@ -71,9 +71,22 @@ function inlineMarkdown(raw) {
 function markdown(raw) {
   const source = String(raw ?? "").replace(/\r\n?/g, "\n");
   const blocks = [];
-  const withBlocks = source.replace(/```([^\n]*)\n?([\s\S]*?)```/g, (_, language, code) => {
+  const mathBlocks = [];
+  const withCodeBlocks = source.replace(/```([^\n]*)\n?([\s\S]*?)```/g, (_, language, code) => {
     const key = `\u0000BLOCK${blocks.length}\u0000`;
     blocks.push(`<pre><code data-language="${escapeHtml(language.trim())}">${escapeHtml(code.replace(/\n$/, ""))}</code></pre>`);
+    return key;
+  });
+  const withBlocks = withCodeBlocks.replace(/\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]/g, (_, dollars, brackets) => {
+    const tex = String(dollars ?? brackets ?? "").trim();
+    const key = `\n\u0000MATH${mathBlocks.length}\u0000\n`;
+    try {
+      mathBlocks.push(`<div class="display-math">${globalThis.katex.renderToString(tex, {
+        displayMode: true, throwOnError: false, strict: "ignore", trust: false, output: "htmlAndMathml",
+      })}</div>`);
+    } catch {
+      mathBlocks.push(`<pre class="math-fallback"><code>${escapeHtml(tex)}</code></pre>`);
+    }
     return key;
   });
   const lines = withBlocks.split("\n");
@@ -89,6 +102,8 @@ function markdown(raw) {
   for (const line of lines) {
     const block = line.match(/^\u0000BLOCK(\d+)\u0000$/);
     if (block) { flushParagraph(); closeList(); out.push(blocks[Number(block[1])]); continue; }
+    const mathBlock = line.match(/^\u0000MATH(\d+)\u0000$/);
+    if (mathBlock) { flushParagraph(); closeList(); out.push(mathBlocks[Number(mathBlock[1])]); continue; }
     const heading = line.match(/^(#{1,3})\s+(.+)$/);
     if (heading) { flushParagraph(); closeList(); const level = heading[1].length; out.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`); continue; }
     if (/^\s*([-*_])(?:\s*\1){2,}\s*$/.test(line)) { flushParagraph(); closeList(); out.push("<hr>"); continue; }

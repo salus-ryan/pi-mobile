@@ -74,6 +74,9 @@ button { color: inherit; }
 .message-content blockquote { margin: .7em 0; padding: .1em 0 .1em 13px; border-left: 3px solid var(--accent-strong); color: var(--muted); }
 .message-content ul, .message-content ol { padding-left: 1.45em; }
 .message-content hr { border: 0; border-top: 1px solid var(--border); margin: 1.3em 0; }
+.message-content .display-math { margin: .8em 0; padding: .35em 0; overflow-x: auto; overflow-y: hidden; text-align: center; }
+.message-content .display-math .katex-display { margin: 0; min-width: max-content; }
+.message-content .math-fallback { color: var(--muted); }
 .message-content table { display: block; overflow-x: auto; border-collapse: collapse; font-size: .92em; }
 .message-content th, .message-content td { border: 1px solid var(--border); padding: 7px 9px; }
 
