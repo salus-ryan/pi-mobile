@@ -77,8 +77,15 @@ button { color: inherit; }
 .message-content .display-math { margin: .8em 0; padding: .35em 0; overflow-x: auto; overflow-y: hidden; text-align: center; }
 .message-content .display-math .katex-display { margin: 0; min-width: max-content; }
 .message-content .math-fallback { color: var(--muted); }
-.message-content table { display: block; overflow-x: auto; border-collapse: collapse; font-size: .92em; }
-.message-content th, .message-content td { border: 1px solid var(--border); padding: 7px 9px; }
+.message-content .table-scroll { margin: .85em 0; overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.message-content table { width: 100%; min-width: 520px; border-collapse: collapse; table-layout: fixed; font-size: .88em; line-height: 1.4; }
+.message-content th, .message-content td { padding: 9px 11px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); overflow-wrap: break-word; vertical-align: top; }
+.message-content th { background: var(--surface-2); color: var(--text); font-weight: 700; }
+.message-content th:last-child, .message-content td:last-child { border-right: 0; }
+.message-content tbody tr:last-child td { border-bottom: 0; }
+.message-content .align-left { text-align: left; }
+.message-content .align-center { text-align: center; }
+.message-content .align-right { text-align: right; }
 
 .activity { margin: 12px 4px 20px; border: 1px solid var(--border); background: var(--surface); border-radius: 14px; overflow: hidden; }
 .activity-title { display: flex; align-items: center; gap: 9px; padding: 10px 12px; color: var(--muted); font-size: 13px; }

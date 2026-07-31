@@ -68,6 +68,39 @@ function inlineMarkdown(raw) {
   return text;
 }
 
+function tableCells(line) {
+  const trimmed = String(line ?? "").trim();
+  if (!trimmed.includes("|")) return null;
+  const body = trimmed.replace(/^\|/, "").replace(/\|$/, "");
+  const cells = [];
+  let cell = "";
+  let inCode = false;
+  for (let index = 0; index < body.length; index++) {
+    const char = body[index];
+    if (char === "\\" && body[index + 1] === "|") {
+      cell += "|";
+      index++;
+    } else if (char === "`") {
+      inCode = !inCode;
+      cell += char;
+    } else if (char === "|" && !inCode) {
+      cells.push(cell.trim());
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+  cells.push(cell.trim());
+  return cells.length > 1 ? cells : null;
+}
+
+function tableAlignment(separator) {
+  const value = separator.trim();
+  if (value.startsWith(":") && value.endsWith(":")) return "center";
+  if (value.endsWith(":")) return "right";
+  return "left";
+}
+
 function markdown(raw) {
   const source = String(raw ?? "").replace(/\r\n?/g, "\n");
   const blocks = [];
@@ -99,7 +132,32 @@ function markdown(raw) {
   };
   const closeList = () => { if (list) out.push(`</${list}>`); list = null; };
 
-  for (const line of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    const line = lines[lineIndex];
+    const headerCells = tableCells(line);
+    const separators = tableCells(lines[lineIndex + 1]);
+    const isTable = headerCells && separators
+      && headerCells.length === separators.length
+      && separators.every((cell) => /^:?-{3,}:?$/.test(cell));
+    if (isTable) {
+      flushParagraph();
+      closeList();
+      const alignments = separators.map(tableAlignment);
+      const cellHtml = (cell, column, tag) => `<${tag} class="align-${alignments[column]}">${inlineMarkdown(cell)}</${tag}>`;
+      const head = `<thead><tr>${headerCells.map((cell, column) => cellHtml(cell, column, "th")).join("")}</tr></thead>`;
+      const rows = [];
+      lineIndex += 2;
+      while (lineIndex < lines.length) {
+        const cells = tableCells(lines[lineIndex]);
+        if (!cells) break;
+        const normalized = Array.from({ length: headerCells.length }, (_, column) => cells[column] ?? "");
+        rows.push(`<tr>${normalized.map((cell, column) => cellHtml(cell, column, "td")).join("")}</tr>`);
+        lineIndex++;
+      }
+      lineIndex--;
+      out.push(`<div class="table-scroll"><table>${head}<tbody>${rows.join("")}</tbody></table></div>`);
+      continue;
+    }
     const block = line.match(/^\u0000BLOCK(\d+)\u0000$/);
     if (block) { flushParagraph(); closeList(); out.push(blocks[Number(block[1])]); continue; }
     const mathBlock = line.match(/^\u0000MATH(\d+)\u0000$/);

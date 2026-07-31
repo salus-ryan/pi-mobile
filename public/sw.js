@@ -1,8 +1,8 @@
-const CACHE = "pi-mobile-v2";
+const CACHE = "pi-mobile-v3";
 const SHELL = [
   "/",
-  "/styles.css?v=2",
-  "/app.js?v=2",
+  "/styles.css?v=3",
+  "/app.js?v=3",
   "/vendor/katex/katex.min.css?v=2",
   "/vendor/katex/katex.min.js?v=2",
   "/manifest.webmanifest",
