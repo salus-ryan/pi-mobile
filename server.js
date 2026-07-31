@@ -119,7 +119,14 @@ function sendWithoutResponse(message) {
 
 function authorized(req, url) {
   const header = req.headers.authorization;
-  return header === `Bearer ${token}` || url.searchParams.get("token") === token;
+  const cookies = Object.fromEntries(
+    String(req.headers.cookie || "")
+      .split(";")
+      .map((part) => part.trim().split(/=(.*)/s, 2))
+      .filter(([name, value]) => name && value !== undefined)
+      .map(([name, value]) => [decodeURIComponent(name), decodeURIComponent(value)]),
+  );
+  return header === `Bearer ${token}` || url.searchParams.get("token") === token || cookies.pi_mobile_token === token;
 }
 
 function json(res, status, body) {
@@ -177,6 +184,12 @@ async function staticFile(pathname, res) {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
   try {
+    // Visiting the complete launch URL establishes an HttpOnly localhost cookie.
+    // This keeps authentication working after refresh and in an installed PWA.
+    if (url.searchParams.get("token") === token) {
+      res.setHeader("set-cookie", `pi_mobile_token=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=2592000`);
+    }
+
     if (url.pathname === "/events") {
       if (!authorized(req, url)) return json(res, 401, { error: "Unauthorized" });
       res.writeHead(200, {
